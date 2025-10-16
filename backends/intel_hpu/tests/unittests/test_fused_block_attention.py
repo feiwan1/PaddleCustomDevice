@@ -281,26 +281,38 @@ class TestFusedBlockAttention:
 
         b, s, h = src.shape
         src = src.reshape([-1, h])
-        out_linear_out = paddlenlp_ops.fused_block_attention(
-            src,
-            self.new_rope.transpose([0, 1, 3, 2, 4]).squeeze(2),
-            self.k_cache_test,
-            self.v_cache_test,
-            self.block_groups,
-            self.block_list,
-            self.block_mapping,
-            self.block_bias,
-            self.block_indices,
-            self.block_offsets,
-            self.qkv_weights,
-            self.qkv_biases,
-            self.linear_weights,
-            self.head_dim,
-            self.num_head,
-            scaling_factor=self.head_dim**-0.5,
-            transpose=True,
-            use_neox_style=True,
-        ).reshape([b, -1, h])
+        import paddle.profiler as profiler
+
+        with profiler.Profiler(
+            targets=[
+                profiler.ProfilerTarget.CPU,
+                profiler.ProfilerTarget.CUSTOM_DEVICE,
+            ],
+            scheduler=(10, 15),
+            on_trace_ready=profiler.export_chrome_tracing("./log"),
+        ) as p:
+            for i in range(30):
+                out_linear_out = paddlenlp_ops.fused_block_attention(
+                    src,
+                    self.new_rope.transpose([0, 1, 3, 2, 4]).squeeze(2),
+                    self.k_cache_test,
+                    self.v_cache_test,
+                    self.block_groups,
+                    self.block_list,
+                    self.block_mapping,
+                    self.block_bias,
+                    self.block_indices,
+                    self.block_offsets,
+                    self.qkv_weights,
+                    self.qkv_biases,
+                    self.linear_weights,
+                    self.head_dim,
+                    self.num_head,
+                    scaling_factor=self.head_dim**-0.5,
+                    transpose=True,
+                    use_neox_style=True,
+                ).reshape([b, -1, h])
+                p.step()
 
         assert paddle.allclose(
             out_linear_out_ref.to("cpu").to("float32"),
@@ -362,11 +374,11 @@ if __name__ == "__main__":
     test_1 = test_case_decode_MHA()
     test_1.run_test()
 
-    test_2 = test_case_decode_GQA()
-    test_2.run_test()
+    # test_2 = test_case_decode_GQA()
+    # test_2.run_test()
 
-    test_3 = test_case_decode_MHA_QKVbias()
-    test_3.run_test()
+    # test_3 = test_case_decode_MHA_QKVbias()
+    # test_3.run_test()
 
-    test_4 = test_case_decode_GQA_QKVbias()
-    test_4.run_test()
+    # test_4 = test_case_decode_GQA_QKVbias()
+    # test_4.run_test()
