@@ -500,6 +500,26 @@ class FusedMHABlockAttention : public FusedBlockAttentionBase {
     std::vector<synTensor> index_select_v_out;
     index_select_v_out.push_back(index_select_v_i);
 
+    printf("kcache dims: ");
+    for (auto d : ins[key_cache_index].dims) {
+      printf("%ld ", d);
+    }
+    printf("\n");
+
+    printf("index dims: ");
+    for (auto d : ins[block_list_index].dims) {
+      printf("%ld ", d);
+    }
+    printf("\n");
+
+    printf("axis:%d\n", params.index_select_params.axis);
+
+    printf("index_selected_dims: ");
+    for (auto d : index_selected_dims) {
+      printf("%ld ", d);
+    }
+    printf("\n");
+
     if (kv_dtype == synDataType::syn_type_fp8_143) {
       AddNodeIndexSelect<phi::dtype::float8_e4m3fn>(
           index_select_k_in,

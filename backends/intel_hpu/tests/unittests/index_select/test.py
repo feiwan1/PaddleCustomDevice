@@ -17,24 +17,27 @@ import numpy as np
 
 np.random.seed(42)
 
-arr1 = np.random.rand(32, 8, 512, 2048)
-# arr1 = np.random.rand(32, 512, 2048)
+# arr1 = np.random.rand(32, 8, 512, 2048)
+
 
 # arr1 = np.random.rand(20, 128, 32, 128)
 
-index = paddle.to_tensor([32], dtype="int32")
+# np_index = paddle.randint(0, 32, [32], dtype=paddle.int32)
+np_index = paddle.randint(0, 32, [32], dtype=paddle.int32)
+
+
+index_x = paddle.to_tensor(np_index.numpy(), dtype="int32")
+index_y = paddle.to_tensor(np_index.numpy(), dtype="int32")
+
+arr1 = np.random.rand(32, 512, 2048)
+index_x = paddle.to_tensor([32], dtype="int32")
+index_y = paddle.to_tensor([32], dtype="int32")
 
 # Bf16
-x = paddle.to_tensor(arr1, dtype="bfloat16")
+x_bf16 = paddle.to_tensor(arr1, dtype="bfloat16")
 
 # Fp8
-# x = paddle.to_tensor(arr1, dtype='bfloat16').astype(paddle.float8_e4m3fn)
-
-
-print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-print(">>>> Test data type is:", x.dtype)
-print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-
+x_fp8 = paddle.to_tensor(arr1, dtype="bfloat16").astype(paddle.float8_e4m3fn)
 
 import paddle.profiler as profiler
 
@@ -46,8 +49,9 @@ with profiler.Profiler(
     scheduler=(10, 15),
     on_trace_ready=profiler.export_chrome_tracing("./log"),
 ) as p:
-    for i in range(30):
-        out = paddle.index_select(x=x, index=index, axis=3)
+    for i in range(20):
+        out1 = paddle.index_select(x=x_bf16, index=index_x, axis=0)
+        out2 = paddle.index_select(x=x_fp8, index=index_y, axis=0)
         p.step()
 
 # print(out)

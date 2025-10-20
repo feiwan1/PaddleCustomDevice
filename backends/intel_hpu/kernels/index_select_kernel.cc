@@ -34,6 +34,13 @@ class IndexSelect : public HpuOperator {
 
     std::vector<synTensor> syn_inputs;
     for (size_t i = 0; i < inputs.size(); i++) {
+      /*
+      printf("input %ld dims:", i);
+      for (auto d : inputs[i].dims) {
+        printf("%ld ", d);
+      }
+      printf("\n");
+      */
       syn_inputs.push_back(createTensor(inputs[i].dims.size(),
                                         inputs[i].type,
                                         inputs[i].dims,
@@ -41,8 +48,18 @@ class IndexSelect : public HpuOperator {
                                         inputs[i].name));
     }
 
+    // printf("axis=%d\n", params.params.axis);
+
     std::vector<synTensor> syn_outputs;
     for (size_t i = 0; i < outputs.size(); i++) {
+      /*
+      printf("output %ld dims:", i);
+      for (auto d : outputs[i].dims) {
+        printf("%ld ", d);
+      }
+      printf("\n");
+      */
+
       syn_outputs.push_back(createTensor(outputs[i].dims.size(),
                                          outputs[i].type,
                                          outputs[i].dims,
@@ -51,6 +68,7 @@ class IndexSelect : public HpuOperator {
     }
 
     guid_ = guid_ + SynDataTypeToStr(inputs[0].type);
+    auto op_name = "index_select_" + SynDataTypeToStr(inputs[0].type);
 
     synStatus status = synNodeCreate(graphHandle_,
                                      syn_inputs.data(),
@@ -60,7 +78,7 @@ class IndexSelect : public HpuOperator {
                                      &params.params,
                                      sizeof(params.params),
                                      guid_.c_str(),
-                                     "index_select",
+                                     op_name.c_str(),
                                      nullptr,
                                      nullptr);
     PD_CHECK(
